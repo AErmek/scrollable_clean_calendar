@@ -65,6 +65,10 @@ class MyApp extends StatelessWidget {
           calendarController: calendarController,
           layout: Layout.BEAUTY,
           calendarCrossAxisSpacing: 0,
+          dayTextStyle: TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+          ),
         ),
       ),
     );

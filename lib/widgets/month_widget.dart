@@ -10,7 +10,7 @@ class MonthWidget extends StatelessWidget {
   final Layout? layout;
   final TextStyle? textStyle;
   final TextAlign? textAlign;
-  final Widget Function(BuildContext context, String month)? monthBuilder;
+  final Widget Function(BuildContext context, DateTime month)? monthBuilder;
 
   const MonthWidget({
     Key? key,
@@ -28,7 +28,7 @@ class MonthWidget extends StatelessWidget {
         '${DateFormat('MMMM', locale).format(DateTime(month.year, month.month)).capitalize()} ${DateFormat('yyyy', locale).format(DateTime(month.year, month.month))}';
 
     if (monthBuilder != null) {
-      return monthBuilder!(context, text);
+      return monthBuilder!(context, month);
     }
 
     return <Layout, Widget Function()>{

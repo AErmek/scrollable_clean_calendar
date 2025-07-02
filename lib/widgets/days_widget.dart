@@ -20,7 +20,10 @@ class DaysWidget extends StatelessWidget {
   final Color? disableBackgroundColor;
   final Color? dayDisableColor;
   final double radius;
-  final TextStyle? textStyle;
+  final TextStyle textStyle;
+  final TextStyle? todayTextStyle;
+  final TextStyle? selectedTextStyle;
+  final TextStyle? withingRangeTextStyle;
   final double? aspectRatio;
 
   const DaysWidget({
@@ -39,6 +42,9 @@ class DaysWidget extends StatelessWidget {
     required this.radius,
     required this.textStyle,
     required this.aspectRatio,
+    required this.todayTextStyle,
+    required this.selectedTextStyle,
+    required this.withingRangeTextStyle,
   }) : super(key: key);
 
   @override
@@ -103,6 +109,8 @@ class DaysWidget extends StatelessWidget {
           text: text,
           selectedMaxDate: cleanCalendarController.rangeMaxDate,
           selectedMinDate: cleanCalendarController.rangeMinDate,
+          isFirstDayOfMonth: day.day == 1,
+          isLastDayOfMonth: day.day == DateTime(day.year, day.month + 1, 0).day,
         );
 
         if (dayBuilder != null) {
@@ -137,6 +145,7 @@ class DaysWidget extends StatelessWidget {
     );
   }
 
+  //TODO ignore
   Widget _pattern(BuildContext context, DayValues values) {
     Color bgColor = backgroundColor ?? Theme.of(context).colorScheme.surface;
     TextStyle txtStyle =
@@ -216,29 +225,31 @@ class DaysWidget extends StatelessWidget {
 
   Widget _beauty(BuildContext context, DayValues values) {
     BorderRadiusGeometry? borderRadius;
+    BoxDecoration? additionalDecoration;
     Color bgColor = Colors.transparent;
     TextStyle txtStyle =
-        (textStyle ?? Theme.of(context).textTheme.bodyLarge)!.copyWith(
-      color: backgroundColor != null
-          ? backgroundColor!.computeLuminance() > .5
-              ? Colors.black
-              : Colors.white
-          : Theme.of(context).colorScheme.onSurface,
-      fontWeight: values.isFirstDayOfWeek || values.isLastDayOfWeek
-          ? FontWeight.bold
-          : null,
-    );
+        values.isToday ? (todayTextStyle ?? textStyle) : textStyle;
 
     if (values.isSelected) {
-      if (values.isFirstDayOfWeek) {
+      if (values.isFirstDayOfWeek || values.isFirstDayOfMonth) {
         borderRadius = BorderRadius.only(
           topLeft: Radius.circular(radius),
           bottomLeft: Radius.circular(radius),
+          topRight: (values.isLastDayOfMonth || values.isLastDayOfWeek)
+              ? Radius.circular(radius)
+              : Radius.zero,
+          bottomRight: (values.isLastDayOfMonth || values.isLastDayOfWeek)
+              ? Radius.circular(radius)
+              : Radius.zero,
         );
-      } else if (values.isLastDayOfWeek) {
+      } else if (values.isLastDayOfWeek || values.isLastDayOfMonth) {
         borderRadius = BorderRadius.only(
           topRight: Radius.circular(radius),
           bottomRight: Radius.circular(radius),
+          // topLeft:
+          //     values.isFirstDayOfMonth ? Radius.circular(radius) : Radius.zero,
+          // bottomLeft:
+          //     values.isFirstDayOfMonth ? Radius.circular(radius) : Radius.zero,
         );
       }
 
@@ -248,42 +259,52 @@ class DaysWidget extends StatelessWidget {
               values.day.isSameDay(values.selectedMaxDate!))) {
         bgColor =
             selectedBackgroundColor ?? Theme.of(context).colorScheme.primary;
-        txtStyle =
-            (textStyle ?? Theme.of(context).textTheme.bodyLarge)!.copyWith(
-          color: selectedBackgroundColor != null
-              ? selectedBackgroundColor!.computeLuminance() > .5
-                  ? Colors.black
-                  : Colors.white
-              : Theme.of(context).colorScheme.onPrimary,
-          fontWeight: FontWeight.bold,
-        );
+        txtStyle = selectedTextStyle ?? textStyle;
 
         if (values.selectedMinDate == values.selectedMaxDate) {
           borderRadius = BorderRadius.circular(radius);
         } else if (values.selectedMinDate != null &&
             values.day.isSameDay(values.selectedMinDate!)) {
-          borderRadius = BorderRadius.only(
-            topLeft: Radius.circular(radius),
-            bottomLeft: Radius.circular(radius),
+          if (values.selectedMinDate != values.selectedMaxDate &&
+              values.selectedMaxDate != null &&
+              !values.isLastDayOfMonth &&
+              !values.isLastDayOfWeek) {
+            additionalDecoration = BoxDecoration(
+              borderRadius: borderRadius = BorderRadius.only(
+                topLeft: Radius.circular(radius),
+                bottomLeft: Radius.circular(radius),
+              ),
+              color: selectedBackgroundColorBetween ??
+                  Theme.of(context).colorScheme.primary.withOpacity(.3),
+            );
+          }
+
+          borderRadius = BorderRadius.all(
+            Radius.circular(radius),
           );
         } else if (values.selectedMaxDate != null &&
             values.day.isSameDay(values.selectedMaxDate!)) {
-          borderRadius = BorderRadius.only(
-            topRight: Radius.circular(radius),
-            bottomRight: Radius.circular(radius),
+          if (values.selectedMinDate != values.selectedMaxDate &&
+              values.selectedMinDate != null &&
+              !values.isFirstDayOfMonth &&
+              !values.isFirstDayOfWeek) {
+            additionalDecoration = BoxDecoration(
+              borderRadius: borderRadius = BorderRadius.only(
+                topRight: Radius.circular(radius),
+                bottomRight: Radius.circular(radius),
+              ),
+              color: selectedBackgroundColorBetween ??
+                  Theme.of(context).colorScheme.primary.withOpacity(.3),
+            );
+          }
+          borderRadius = BorderRadius.all(
+            Radius.circular(radius),
           );
         }
       } else {
         bgColor = selectedBackgroundColorBetween ??
             Theme.of(context).colorScheme.primary.withOpacity(.3);
-        txtStyle =
-            (textStyle ?? Theme.of(context).textTheme.bodyLarge)!.copyWith(
-          color:
-              selectedBackgroundColor ?? Theme.of(context).colorScheme.primary,
-          fontWeight: values.isFirstDayOfWeek || values.isLastDayOfWeek
-              ? FontWeight.bold
-              : null,
-        );
+        txtStyle = withingRangeTextStyle ?? textStyle;
       }
     } else if (values.day.isSameDay(values.minDate)) {
     } else if (values.day.isBefore(values.minDate) ||
@@ -298,7 +319,7 @@ class DaysWidget extends StatelessWidget {
       );
     }
 
-    return Container(
+    final child = Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: bgColor,
@@ -310,5 +331,12 @@ class DaysWidget extends StatelessWidget {
         style: txtStyle,
       ),
     );
+
+    return additionalDecoration != null
+        ? DecoratedBox(
+            decoration: additionalDecoration,
+            child: child,
+          )
+        : child;
   }
 }

@@ -26,6 +26,11 @@ class ScrollableCleanCalendar extends StatefulWidget {
   /// The space between month and calendar
   final double spaceBetweenMonthAndCalendar;
 
+  /// The space between weekdays and calendar
+  final double spaceWeekDaysAndCalendar;
+
+  final double weekDaysHeight;
+
   /// The space between calendars
   final double spaceBetweenCalendars;
 
@@ -51,7 +56,11 @@ class ScrollableCleanCalendar extends StatefulWidget {
   final double? weekdayAspectRatio;
 
   /// The label text style of day
-  final TextStyle? dayTextStyle;
+  final TextStyle dayTextStyle;
+
+  final TextStyle? todayTextStyle;
+  final TextStyle? selectedTextStyle;
+  final TextStyle? withingRangeTextStyle;
 
   /// The aspect ratio of day items
   final double? dayAspectRatio;
@@ -75,7 +84,7 @@ class ScrollableCleanCalendar extends StatefulWidget {
   final double dayRadius;
 
   /// A builder to make a customized month
-  final Widget Function(BuildContext context, String month)? monthBuilder;
+  final Widget Function(BuildContext context, DateTime month)? monthBuilder;
 
   /// A builder to make a customized weekday
   final Widget Function(BuildContext context, String weekday)? weekdayBuilder;
@@ -95,6 +104,8 @@ class ScrollableCleanCalendar extends StatefulWidget {
     this.calendarMainAxisSpacing = 4,
     this.spaceBetweenCalendars = 24,
     this.spaceBetweenMonthAndCalendar = 24,
+    this.spaceWeekDaysAndCalendar = 4,
+    this.weekDaysHeight = 24,
     this.padding,
     this.monthBuilder,
     this.weekdayBuilder,
@@ -108,10 +119,13 @@ class ScrollableCleanCalendar extends StatefulWidget {
     this.daySelectedBackgroundColorBetween,
     this.dayDisableBackgroundColor,
     this.dayDisableColor,
-    this.dayTextStyle,
+    required this.dayTextStyle,
     this.dayAspectRatio,
     this.dayRadius = 6,
     required this.calendarController,
+    this.todayTextStyle,
+    this.selectedTextStyle,
+    this.withingRangeTextStyle,
   }) : assert(layout != null ||
             (monthBuilder != null &&
                 weekdayBuilder != null &&
@@ -155,7 +169,7 @@ class _ScrollableCleanCalendarState extends State<ScrollableCleanCalendar> {
       itemBuilder: (context, index) {
         final month = widget.calendarController.months[index];
 
-        return childCollumn(month);
+        return childColumn(month);
       },
     );
   }
@@ -171,12 +185,12 @@ class _ScrollableCleanCalendarState extends State<ScrollableCleanCalendar> {
       itemBuilder: (context, index) {
         final month = widget.calendarController.months[index];
 
-        return childCollumn(month);
+        return childColumn(month);
       },
     );
   }
 
-  Widget childCollumn(DateTime month) {
+  Widget childColumn(DateTime month) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -194,15 +208,18 @@ class _ScrollableCleanCalendarState extends State<ScrollableCleanCalendar> {
         SizedBox(height: widget.spaceBetweenMonthAndCalendar),
         Column(
           children: [
-            WeekdaysWidget(
-              showWeekdays: widget.showWeekdays,
-              cleanCalendarController: widget.calendarController,
-              locale: widget.locale,
-              layout: widget.layout,
-              weekdayBuilder: widget.weekdayBuilder,
-              textStyle: widget.weekdayTextStyle,
-              aspectRatio: widget.weekdayAspectRatio,
-            ),
+            if (widget.showWeekdays) ...[
+              WeekdaysWidget(
+                cleanCalendarController: widget.calendarController,
+                locale: widget.locale,
+                layout: widget.layout,
+                weekdayBuilder: widget.weekdayBuilder,
+                textStyle: widget.weekdayTextStyle,
+                aspectRatio: widget.weekdayAspectRatio,
+                weekDaysHeight: widget.weekDaysHeight,
+              ),
+              SizedBox(height: widget.spaceWeekDaysAndCalendar),
+            ],
             AnimatedBuilder(
               animation: widget.calendarController,
               builder: (_, __) {
@@ -222,6 +239,9 @@ class _ScrollableCleanCalendarState extends State<ScrollableCleanCalendar> {
                   radius: widget.dayRadius,
                   textStyle: widget.dayTextStyle,
                   aspectRatio: widget.dayAspectRatio,
+                  todayTextStyle: widget.todayTextStyle,
+                  selectedTextStyle: widget.selectedTextStyle,
+                  withingRangeTextStyle: widget.withingRangeTextStyle,
                 );
               },
             )

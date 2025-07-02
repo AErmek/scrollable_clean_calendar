@@ -89,13 +89,13 @@ class CleanCalendarController extends ChangeNotifier {
   DateTime? rangeMinDate;
   DateTime? rangeMaxDate;
 
-  List<String> getDaysOfWeek([String locale = 'pt']) {
+  List<String> getDaysOfWeek([String locale = 'en']) {
     var today = DateTime.now();
 
     while (today.weekday != weekdayStart) {
       today = today.subtract(const Duration(days: 1));
     }
-    final dateFormat = DateFormat(DateFormat.ABBR_WEEKDAY, locale);
+    final dateFormat = DateFormat.E(locale);
     final daysOfWeek = [
       dateFormat.format(today),
       dateFormat.format(today.add(const Duration(days: 1))),
